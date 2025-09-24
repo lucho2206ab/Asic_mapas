@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <title>Mapa de Usuarios y Red de Riego</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    #map { height: 600px; width: 100%; }
+  </style>
+</head>
+<body>
+  <h2>Usuarios y Red de Riego</h2>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Inicializar mapa en Mendoza
+    const map = L.map('map').setView([-32.889, -68.845], 13);
+
+    // Capa base
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Definir control de capas (vacío al inicio)
+    const baseMaps = { "OpenStreetMap": osm };
+    const overlayMaps = {};
+    const controlCapas = L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+    // ============================
+    // CAPA 1: Red de Riego (desde archivo GeoJSON)
+    // ============================
+    fetch("data/RedRiegoPrimeraZona_wgs84.geojson")
+      .then(res => res.json())
+      .then(data => {
+        const capaRiego = L.geoJSON(data, {
+          style: { color: "blue", weight: 2 },
+          onEachFeature: (feature, layer) => {
+            if (feature.properties) {
+              layer.bindPopup(
+                Object.keys(feature.properties)
+                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
+                  .join("<br>")
+              );
+            }
+          }
+        }).addTo(map);
+
+        controlCapas.addOverlay(capaRiego, "Red de Riego");
+      });
+
+    // ============================
+    // CAPA 2: Parcelario (desde archivo GeoJSON)
+    // ============================
+    fetch("data/ParcelarioRioMendoza-DerechoSuperior_wgs84.geojson")
+      .then(res => res.json())
+      .then(data => {
+        const capaParcelario = L.geoJSON(data, {
+          style: { color: "orange", weight: 1, fillColor: "orange", fillOpacity: 0.1 },
+          onEachFeature: (feature, layer) => {
+            if (feature.properties) {
+              layer.bindPopup(
+                Object.keys(feature.properties)
+                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
+                  .join("<br>")
+              );
+            }
+          }
+        }).addTo(map);
+
+        controlCapas.addOverlay(capaParcelario, "Parcelario");
+      });
+
+    // ============================
+    // CAPA 3: Asociaciones (desde archivo JSON)
+    // ============================
+    fetch("data/asociaciones.json")
+      .then(res => res.json())
+      .then(data => {
+        const capaAsociaciones = L.geoJSON(data, {
+          style: { color: "purple", weight: 2, fillColor: "purple", fillOpacity: 0.5 },
+          onEachFeature: (feature, layer) => {
+            if (feature.properties) {
+              layer.bindPopup(
+                Object.keys(feature.properties)
+                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
+                  .join("<br>")
+              );
+            }
+          }
+        }).addTo(map);
+
+        controlCapas.addOverlay(capaAsociaciones, "Asociaciones");
+      });
+
+    // ============================
+    // CAPA 4: Cuencas (desde archivo JSON)
+    // ============================
+    fetch("data/cuencas.json")
+      .then(res => res.json())
+      .then(data => {
+        const capaCuencas = L.geoJSON(data, {
+          style: { color: "brown", weight: 2, fillColor: "brown", fillOpacity: 0.3 },
+          onEachFeature: (feature, layer) => {
+            if (feature.properties) {
+              layer.bindPopup(
+                Object.keys(feature.properties)
+                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
+                  .join("<br>")
+              );
+            }
+          }
+        }).addTo(map);
+
+        controlCapas.addOverlay(capaCuencas, "Cuencas");
+      });
+
+    // ============================
+    // CAPA 5: Red Primaria (desde archivo JSON)
+    // ============================
+    fetch("data/red-primaria.json")
+      .then(res => res.json())
+      .then(data => {
+        const capaRedPrimaria = L.geoJSON(data, {
+          style: { color: "red", weight: 3 },
+          onEachFeature: (feature, layer) => {
+            if (feature.properties) {
+              layer.bindPopup(
+                Object.keys(feature.properties)
+                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
+                  .join("<br>")
+              );
+            }
+          }
+        }).addTo(map);
+
+        controlCapas.addOverlay(capaRedPrimaria, "Red Primaria");
+      });
+  </script>
+</body>
+</html>
