@@ -27,6 +27,10 @@
     const baseMaps = { "OpenStreetMap": osm };
     const overlayMaps = {};
     const controlCapas = L.control.layers(baseMaps, overlayMaps).addTo(map);
+    // ===============================================
+    // 1. DECLARACIÓN DE VARIABLES PARA CARGA CONDICIONAL
+    // ===============================================
+    let capaParcelario;
 
     // ============================
     // CAPA 1: Red de Riego (desde archivo GeoJSON)
@@ -51,7 +55,7 @@
       });
 
     // ============================
-    // CAPA 2: Parcelario (desde archivo GeoJSON)
+    // CAPA 2: Parcelario (carga condicional)
     // ============================
     fetch("data/ParcelarioRioMendoza-DerechoSuperior_wgs84.geojson")
       .then(res => res.json())
@@ -67,7 +71,7 @@
               );
             }
           }
-        }).addTo(map);
+        });
 
         controlCapas.addOverlay(capaParcelario, "Parcelario");
       });
@@ -89,7 +93,7 @@
               );
             }
           }
-        }).addTo(map);
+        });
 
         controlCapas.addOverlay(capaAsociaciones, "Asociaciones");
       });
@@ -111,7 +115,7 @@
               );
             }
           }
-        }).addTo(map);
+        });
 
         controlCapas.addOverlay(capaCuencas, "Cuencas");
       });
@@ -133,10 +137,88 @@
               );
             }
           }
-        }).addTo(map);
+        });
 
         controlCapas.addOverlay(capaRedPrimaria, "Red Primaria");
       });
+    // ============================
+    // CAPA 6: Derechos superficiales RM (con etiquetas ccpp1)
+    // ============================
+    fetch("data/DerechosSuperficialesRioMendoza.geojson")
+      .then(res => res.json())
+      .then(data => {
+        const capaDerechosSuperficialesRM = L.geoJSON(data, {
+          style: { color: "orange", weight: 1, opacity: 0.5, fillColor: "orange", fillOpacity: 0.2 },
+          onEachFeature: (feature, layer) => {
+            if (feature.properties) {
+              // 1. Vincular el popup como ya lo tienes
+              layer.bindPopup(
+                Object.keys(feature.properties)
+                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
+                  .join("<br>")
+              );
+
+              // 2. Agregar la etiqueta permanente (Tooltip)
+              if (feature.properties.ccpp1) {
+                // El 'permanent: true' hace que la etiqueta se muestre siempre
+                // El 'direction: center' intenta ubicarla en el medio del elemento
+                layer.bindTooltip(feature.properties.ccpp1, {
+                  permanent: false,
+                  direction: "center",
+                  className: "etiqueta-ccpp1" // Usaremos esta clase para estilizar
+                });
+              }
+            }
+          }
+        });
+
+        controlCapas.addOverlay(capaDerechosSuperficialesRM, "Derechos Superficiales RM");
+      });
+      // ============================
+    // CAPA 7: Parcelario 1104 1106 1010 1016
+    // ============================
+    fetch("data/Parcelario_1104_1106_1010_1016.geojson")
+      .then(res => res.json())
+      .then(data => {
+        const capaParcelario1104_1106_1010_1016 = L.geoJSON(data, {
+          style: { color: "purple", weight: 3 },
+          onEachFeature: (feature, layer) => {
+            if (feature.properties) {
+              layer.bindPopup(
+                Object.keys(feature.properties)
+                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
+                  .join("<br>")
+              );
+            }
+          }
+        });
+
+        controlCapas.addOverlay(capaParcelario1104_1106_1010_1016, "Parcelario 1104-1106-1010-1016");
+      });
+      // ===============================================
+    // 8. MANEJO DE EVENTO DE ZOOM (Va al final de todos los fetch)
+    // ===============================================
+    map.on('zoomend', () => {
+        const currentZoom = map.getZoom();
+        const zoomThreshold = 14; // Nivel de zoom donde quieres que se active la capa
+
+        // Lógica para la capa de Parcelario
+        if (capaParcelario) { // Verifica que la capa ya se haya cargado (fetch completado)
+            if (currentZoom >= zoomThreshold) {
+                // Si el zoom es suficiente Y la capa aún NO está en el mapa, la añadimos.
+                if (!map.hasLayer(capaParcelario)) {
+                    capaParcelario.addTo(map);
+                    console.log('Parcelario añadido al mapa.');
+                }
+            } else {
+                // Si el zoom es muy bajo Y la capa SÍ está en el mapa, la removemos.
+                if (map.hasLayer(capaParcelario)) {
+                    map.removeLayer(capaParcelario);
+                    console.log('Parcelario removido del mapa (Zoom bajo).');
+                }
+            }
+        }
+    });
   </script>
 </body>
 </html>
