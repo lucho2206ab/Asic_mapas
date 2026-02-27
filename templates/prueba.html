@@ -4,267 +4,169 @@
   <title>Mapa de Usuarios y Red de Riego</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
   <style>
     #map { height: 600px; width: 100%; }
 
-    /* Estilo para el Tooltip que solo muestra el ccpp1 al pasar el mouse */
     .ccpp-tooltip {
-        background-color: #6c3483; /* Púrpura oscuro */
-        color: white;
-        border: 1px solid white;
-        font-weight: bold;
-        padding: 2px 5px;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+      background-color: #6c3483;
+      color: white;
+      border: 1px solid white;
+      font-weight: bold;
+      padding: 2px 5px;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
     }
   </style>
 </head>
+
 <body>
-  <h2>Usuarios y Red de Riego</h2>
-  <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    // Inicializar mapa en Mendoza
-    const map = L.map('map').setView([-32.889, -68.845], 13);
+<h2>Usuarios y Red de Riego</h2>
+<div id="map"></div>
 
-    // Capa base
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-    // Definir control de capas (vacío al inicio)
-    const baseMaps = { "OpenStreetMap": osm };
-    const overlayMaps = {};
-    const controlCapas = L.control.layers(baseMaps, overlayMaps).addTo(map);
+<script>
 
-    // ===============================================
-    // 1. DECLARACIÓN DE VARIABLES
-    // ===============================================
-    let capaParcelario; 
-    let capaRiego;
-    let capaCuencas;
-    let capaAsociaciones;
-    let capaRedPrimaria;
-    let capaDerechosSuperficialesRM;
-    let capaParcelario1104_1106_1010_1016;
+const map = L.map('map').setView([-32.889, -68.845], 13);
 
-    // ============================\
-    // CAPA 2: Red de Riego (desde archivo GeoJSON)
-    // ============================\
-    fetch("api/geojson/red_riego")
-      .then(res => res.json())
-      .then(data => {
-        capaRiego = L.geoJSON(data, {
-          style: { color: "blue", weight: 2 },
-          onEachFeature: (feature, layer) => {
-            if (feature.properties) {
-              layer.bindPopup(
-                Object.keys(feature.properties)
-                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
-                  .join("<br>")
-              );
-            }
-          }
-        }).addTo(map); // Añadir al mapa por defecto
+const osm = L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  { attribution: '© OpenStreetMap contributors' }
+).addTo(map);
 
-        controlCapas.addOverlay(capaRiego, "Red de Riego");
-      })
-      .catch(error => console.error("Error al cargar la capa de Riego:", error));
-
-    // ============================\
-    // CAPA 3: Cuencas (desde archivo GeoJSON)
-    // ============================\
-    fetch("api/geojson/cuencas")
-      .then(res => res.json())
-      .then(data => {
-        capaCuencas = L.geoJSON(data, {
-          style: { color: "red", weight: 2, fillOpacity: 0.1 },
-          onEachFeature: (feature, layer) => {
-            if (feature.properties) {
-              layer.bindPopup(
-                Object.keys(feature.properties)
-                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
-                  .join("<br>")
-              );
-            }
-          }
-        });
-
-        controlCapas.addOverlay(capaCuencas, "Cuencas");
-      })
-      .catch(error => console.error("Error al cargar la capa de Cuencas:", error));
-
-    // ============================\
-    // CAPA 4: Parcelario Rio Mendoza (Carga Condicional vía API)
-    // ============================\
-    fetch("/api/geojson/parcelario_derecho_superior")
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        capaParcelario = L.geoJSON(data, {
-          style: {
-            color: "#6c3483", // Púrpura oscuro
-            weight: 1,
-            fillOpacity: 0.2
-          },
-          onEachFeature: (feature, layer) => {
-            if (feature.properties && feature.properties.ccpp1) {
-              // Popup: Mantiene el comportamiento original de la Node, solo ccpp1 en caso de click
-              layer.bindPopup(`<b>ccpp1</b>: ${feature.properties.ccpp1}`);
-            }
-
-            // **********************************************
-            // Lógica para mostrar solo 'ccpp1' al posicionar el cursor (Tooltip)
-            // **********************************************
-            layer.on('mouseover', function (e) {
-                // Abre el tooltip con el valor de ccpp1 al pasar el mouse
-                this.bindTooltip(feature.properties.ccpp1, {
-                    permanent: false, // Se cierra al quitar el mouse
-                    direction: 'center',
-                    className: 'ccpp-tooltip', // Usa el estilo definido en <style>
-                    offset: [0, 0]
-                }).openTooltip(e.latlng);
-            });
-
-            layer.on('mouseout', function (e) {
-                // Cierra el tooltip al retirar el mouse
-                this.closeTooltip();
-            });
-            // **********************************************
-          }
-        });
-        
-        // // Esta capa NO se añade al mapa por defecto, solo al menú.
-        controlCapas.addOverlay(capaParcelario, "Parcelario Derecho Superior");
-
-      })
-      .catch(error => console.error("Error al cargar la capa de Parcelario:", error));
+const baseMaps = { "OpenStreetMap": osm };
+const overlayMaps = {};
+const controlCapas = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
 
-    // ============================\
-    // CAPA 5: Asociaciones (desde archivo GeoJSON)
-    // ============================\
-    fetch("api/geojson/asociaciones")
-      .then(res => res.json())
-      .then(data => {
-        capaAsociaciones = L.geoJSON(data, {
-          style: { color: "green", weight: 2, fillOpacity: 0.3 },
-          onEachFeature: (feature, layer) => {
-            if (feature.properties) {
-              layer.bindPopup(
-                Object.keys(feature.properties)
-                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
-                  .join("<br>")
-              );
-            }
-          }
-        });
+// =======================================
+// FUNCIÓN UNIVERSAL PARA CARGAR CAPAS
+// =======================================
 
-        controlCapas.addOverlay(capaAsociaciones, "Asociaciones");
-      })
-      .catch(error => console.error("Error al cargar la capa de Asociaciones:", error));
+function cargarCapa(nombreApi, nombreVisual, opciones = {}) {
 
-    // ============================\
-    // CAPA 6: Red Primaria (desde archivo GeoJSON)
-    // ============================\
-    fetch("api/geojson/red_primaria")
-      .then(res => res.json())
-      .then(data => {
-        capaRedPrimaria = L.geoJSON(data, {
-          style: { color: "red", weight: 3 },
-          onEachFeature: (feature, layer) => {
-            if (feature.properties) {
-              layer.bindPopup(
-                Object.keys(feature.properties)
-                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
-                  .join("<br>")
-              );
-            }
-          }
-        });
+  fetch(`/api/geojson/${nombreApi}`)
+  .then(res => {
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+  })
+  .then(data => {
 
-        controlCapas.addOverlay(capaRedPrimaria, "Red Primaria");
-      })
-      .catch(error => console.error("Error al cargar la capa de Red Primaria:", error));
+    const capa = L.geoJSON(data, {
 
-      // ============================\
-    // CAPA 7: Derechos Superficiales RM
-    // ============================\
-    fetch("/api/geojson/derechos_superficiales")
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        capaDerechosSuperficialesRM = L.geoJSON(data, {
-          style: {
-            color: "orange", // Naranja
-            weight: 1,
-            fillOpacity: 0.2
-          },
-          onEachFeature: (feature, layer) => {
-            if (feature.properties && feature.properties.ccpp1) {
-              // Popup: Mantiene el comportamiento original de la Node, solo ccpp1 en caso de click
-              layer.bindPopup(`<b>ccpp1</b>: ${feature.properties.ccpp1}`);
-            }
+      style: opciones.style || { color:"blue", weight:2 },
 
-            // **********************************************
-            // Lógica para mostrar solo 'ccpp1' al posicionar el cursor (Tooltip)
-            // **********************************************
-            layer.on('mouseover', function (e) {
-                // Abre el tooltip con el valor de ccpp1 al pasar el mouse
-                this.bindTooltip(feature.properties.ccpp1, {
-                    permanent: false, // Se cierra al quitar el mouse
-                    direction: 'center',
-                    className: 'ccpp-tooltip', // Usa el estilo definido en <style>
-                    offset: [0, 0]
-                }).openTooltip(e.latlng);
-            });
+      pointToLayer: opciones.pointToLayer,
 
-            layer.on('mouseout', function (e) {
-                // Cierra el tooltip al retirar el mouse
-                this.closeTooltip();
-            });
-            // **********************************************
-          }
-        });
+      onEachFeature: function(feature, layer){
 
-         controlCapas.addOverlay(capaDerechosSuperficialesRM, "Derechos Superficiales RM");
+        if(feature.properties){
 
-      })
-      .catch(error => console.error("Error al cargar la capa de Derechos Superficiales:", error));
+          layer.bindPopup(
+            Object.keys(feature.properties)
+            .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
+            .join("<br>")
+          )
 
-      
-      // ============================\
-    // CAPA 8: Parcelario 1104 1106 1010 1016
-    // ============================\
-    fetch("api/geojson/parcelario_1104")
-      .then(res => res.json())
-      .then(data => {
-        capaParcelario1104_1106_1010_1016 = L.geoJSON(data, {
-          style: { color: "purple", weight: 3 },
-          onEachFeature: (feature, layer) => {
-            if (feature.properties) {
-              layer.bindPopup(
-                Object.keys(feature.properties)
-                  .map(k => `<b>${k}</b>: ${feature.properties[k]}`)
-                  .join("<br>")
-              );
-            }
-          }
-        });
+        }
 
-        controlCapas.addOverlay(capaParcelario1104_1106_1010_1016, "Parcelario 1104-1106-1010-1016");
-      })
-      .catch(error => console.error("Error al cargar la capa Parcelario 1104-1106-1010-1016:", error));
+        if(feature.properties && feature.properties.ccpp1){
 
-    
-   
+          layer.on('mouseover', function(e){
 
-  </script>
+            this.bindTooltip(feature.properties.ccpp1,{
+              permanent:false,
+              direction:'center',
+              className:'ccpp-tooltip'
+            }).openTooltip(e.latlng)
+
+          })
+
+          layer.on('mouseout', function(){
+            this.closeTooltip()
+          })
+
+        }
+
+      }
+
+    })
+
+    if(opciones.visible){
+      capa.addTo(map)
+    }
+
+    controlCapas.addOverlay(capa,nombreVisual)
+
+  })
+  .catch(err => console.error("Error cargando",nombreApi,err))
+
+}
+
+
+// =======================================
+// CAPAS DEL SISTEMA
+// =======================================
+
+cargarCapa(
+  "red_riego",
+  "Red de Riego",
+  {style:{color:"blue",weight:2}, visible:true}
+)
+
+cargarCapa(
+  "cuencas",
+  "Cuencas",
+  {style:{color:"red",weight:2,fillOpacity:0.1}}
+)
+
+cargarCapa(
+  "parcelario_derecho_superior",
+  "Parcelario Derecho Superior",
+  {style:{color:"#6c3483",weight:1,fillOpacity:0.2}}
+)
+
+cargarCapa(
+  "asociaciones",
+  "Asociaciones",
+  {style:{color:"green",weight:2,fillOpacity:0.3}}
+)
+
+cargarCapa(
+  "red_primaria",
+  "Red Primaria",
+  {style:{color:"red",weight:3}}
+)
+
+cargarCapa(
+  "derechos_superficiales",
+  "Derechos Superficiales RM",
+  {style:{color:"orange",weight:1,fillOpacity:0.2}}
+)
+
+cargarCapa(
+  "parcelario_1104",
+  "Parcelario 1104-1106-1010-1016",
+  {style:{color:"purple",weight:2}}
+)
+
+cargarCapa(
+  "1010-2025_convertido_wgs84",
+  "1010-2025 Convertido_WGS84",
+  {style:{color:"darkgreen",weight:2}}
+)
+
+cargarCapa(
+  "der_superficiales_nuevo",
+  "Derechos Superficiales Nuevo",
+  {style:{color:"darkorange",weight:2}}
+)
+
+</script>
+
 </body>
 </html>

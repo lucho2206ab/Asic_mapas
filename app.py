@@ -72,7 +72,9 @@ def get_geojson_from_source(layer_name):
         'cuencas': 'cuencas.json',
         'red_primaria': 'red-primaria.json',
         'derechos_superficiales': 'DerechosSuperficialesRioMendoza.geojson',
-        'parcelario_1104': 'Parcelario_1104_1106_1010_1016.geojson'
+        'parcelario_1104': 'Parcelario_1104_1106_1010_1016.geojson',
+        '1010-2025_convertido_wgs84': '1010-2025_convertido_wgs84.geojson',
+        'der_superficiales_nuevo': 'DerSuperfNuevo_wgs84.geojson',
         # Añade más capas aquí...
     }
     
