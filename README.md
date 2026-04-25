@@ -22,14 +22,21 @@ El objetivo es facilitar la visualización de información geográfica en el fro
 ## Estructura del proyecto
 
 project/
+
 │
 ├── app.py
+
 ├── convertsor_capas.py
+
 ├── requirements.txt
+
 ├── README.md
+
 │
 └── static/
+
 └── data/
+
 1010-2025_convertido_wgs84.geojson
 DerSuperfNuevo_wgs84.geojson
 
