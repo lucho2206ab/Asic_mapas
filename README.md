@@ -7,6 +7,8 @@ Las capas son almacenadas en la carpeta `static/data` y se sirven automáticamen
 El objetivo es facilitar la visualización de información geográfica en el frontend de la aplicación (parcelas, sectores, etc.).
 
 ---
+<img width="870" height="562" alt="image" src="https://github.com/user-attachments/assets/e73ac49c-5c96-45cd-b92f-53568b0c8390" />
+
 
 ## Tecnologías utilizadas
 
